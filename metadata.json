@@ -1,0 +1,6 @@
+{
+  "name": "TRILHO",
+  "description": "TRILHO — Endless runner 2D em 3 faixas com saltos, deslizes, cristais de invulnerabilidade e geração procedural.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

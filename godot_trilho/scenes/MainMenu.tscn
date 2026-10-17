@@ -1,0 +1,211 @@
+[gd_scene load_steps=2 format=3 uid="uid://ctrilhomainmenu001"]
+
+[ext_resource type="Script" path="res://scripts/MainMenu.gd" id="1_menu"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.06, 0.09, 0.15, 1)
+
+[node name="MainPanel" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -280.0
+offset_right = 220.0
+offset_bottom = 280.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="MainPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 72
+text = "TRILHO"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="MainPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.2, 0.88, 1, 1)
+text = "Endless Runner Ferroviário"
+horizontal_alignment = 1
+
+[node name="CoinsLabel" type="Label" parent="MainPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Moedas: 0"
+horizontal_alignment = 1
+
+[node name="BestLabel" type="Label" parent="MainPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+text = "Recorde: 0 m"
+horizontal_alignment = 1
+
+[node name="PlayBtn" type="Button" parent="MainPanel"]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "JOGAR"
+
+[node name="ShopBtn" type="Button" parent="MainPanel"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "LOJA"
+
+[node name="RecordsBtn" type="Button" parent="MainPanel"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "RECORDES"
+
+[node name="SettingsBtn" type="Button" parent="MainPanel"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "DEFINIÇÕES"
+
+[node name="ShopPanel" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -260.0
+offset_right = 220.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 18
+
+[node name="ShopTitle" type="Label" parent="ShopPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Loja de Cores"
+horizontal_alignment = 1
+
+[node name="SkinDefault" type="Button" parent="ShopPanel"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "Azul Clássico (Desbloqueado)"
+
+[node name="SkinSpeedster" type="Button" parent="ShopPanel"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "Velocista Dourado (50 Moedas)"
+
+[node name="SkinNeon" type="Button" parent="ShopPanel"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "Cyber Neon (100 Moedas)"
+
+[node name="BackShopBtn" type="Button" parent="ShopPanel"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "Voltar"
+
+[node name="RecordsPanel" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -180.0
+offset_right = 220.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="RecordsTitle" type="Label" parent="RecordsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Recordes Pessoais"
+horizontal_alignment = 1
+
+[node name="BestDistanceLabel" type="Label" parent="RecordsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Distância Máxima: 0 m"
+horizontal_alignment = 1
+
+[node name="TotalCoinsLabel" type="Label" parent="RecordsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Total de Moedas: 0"
+horizontal_alignment = 1
+
+[node name="BackRecordsBtn" type="Button" parent="RecordsPanel"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "Voltar"
+
+[node name="SettingsPanel" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -200.0
+offset_right = 220.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="SettingsTitle" type="Label" parent="SettingsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Definições"
+horizontal_alignment = 1
+
+[node name="VibrationCheck" type="CheckBox" parent="SettingsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+button_pressed = true
+text = "Vibração Háptica"
+
+[node name="LangLabel" type="Label" parent="SettingsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Idioma: Português (Europeu)"
+
+[node name="BackSettingsBtn" type="Button" parent="SettingsPanel"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+text = "Voltar"
+
+[connection signal="pressed" from="MainPanel/PlayBtn" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="MainPanel/ShopBtn" to="." method="_on_shop_pressed"]
+[connection signal="pressed" from="MainPanel/RecordsBtn" to="." method="_on_records_pressed"]
+[connection signal="pressed" from="MainPanel/SettingsBtn" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="ShopPanel/BackShopBtn" to="." method="_on_back_to_main_pressed"]
+[connection signal="pressed" from="RecordsPanel/BackRecordsBtn" to="." method="_on_back_to_main_pressed"]
+[connection signal="pressed" from="SettingsPanel/BackSettingsBtn" to="." method="_on_back_to_main_pressed"]
