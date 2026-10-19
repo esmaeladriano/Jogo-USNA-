@@ -25,12 +25,12 @@ class TrilhoEngine(
     const val SCREEN_WIDTH = 720f
     const val SCREEN_HEIGHT = 1280f
     const val PLAYER_BASE_Y = 1020f
-    const val BASE_SPEED = 680f
-    const val SPEED_STEP_PER_500M = 40f
+    const val BASE_SPEED = 840f
+    const val SPEED_STEP_PER_500M = 50f
     const val MAX_CRYSTALS = 3
-    const val JUMP_DURATION_TICKS = 38 // ~0.63s
-    const val SLIDE_DURATION_TICKS = 36 // ~0.60s
-    const val LANE_CHANGE_DURATION_TICKS = 9 // 0.15s
+    const val JUMP_DURATION_TICKS = 34 // ~0.56s snappier jump
+    const val SLIDE_DURATION_TICKS = 32 // ~0.53s snappier slide
+    const val LANE_CHANGE_DURATION_TICKS = 7 // ~0.11s super fast responsive lane switch
     const val CRYSTAL_INVULN_DURATION_TICKS = 90 // 1.5s
   }
 
@@ -64,6 +64,9 @@ class TrilhoEngine(
   var isGameOver: Boolean = false
   var currentSpeed: Float = BASE_SPEED
 
+  // Synchronization Lock for thread-safe rendering and physics updates
+  val stateLock = Any()
+
   // Object Pools
   val activeObstacles = mutableListOf<TrackObstacle>()
   val activePickups = mutableListOf<TrackPickup>()
@@ -78,40 +81,42 @@ class TrilhoEngine(
   }
 
   fun reset() {
-    currentLane = Lane.CENTER
-    targetLane = Lane.CENTER
-    playerX = Lane.CENTER.targetX
-    startLaneX = Lane.CENTER.targetX
-    laneChangeTicksRemaining = 0
+    synchronized(stateLock) {
+      currentLane = Lane.CENTER
+      targetLane = Lane.CENTER
+      playerX = Lane.CENTER.targetX
+      startLaneX = Lane.CENTER.targetX
+      laneChangeTicksRemaining = 0
 
-    isJumping = false
-    jumpTicks = 0
-    jumpHeightOffset = 0f
+      isJumping = false
+      jumpTicks = 0
+      jumpHeightOffset = 0f
 
-    isSliding = false
-    slideTicks = 0
+      isSliding = false
+      slideTicks = 0
 
-    crystalsStock = 0
-    crystalInvulnTicks = 0
+      crystalsStock = 0
+      crystalInvulnTicks = 0
 
-    hasShield = false
-    magnetTicksRemaining = 0
-    boostTicksRemaining = 0
-    graceInvulnTicks = 0
+      hasShield = false
+      magnetTicksRemaining = 0
+      boostTicksRemaining = 0
+      graceInvulnTicks = 0
 
-    distancePx = 0f
-    runCoins = 0
-    isGameOver = false
-    currentSpeed = BASE_SPEED
+      distancePx = 0f
+      runCoins = 0
+      isGameOver = false
+      currentSpeed = BASE_SPEED
 
-    activeObstacles.clear()
-    activePickups.clear()
-    particles.clear()
-    nextSpawnY = -200f
-    trackSleeperOffset = 0f
+      activeObstacles.clear()
+      activePickups.clear()
+      particles.clear()
+      nextSpawnY = -200f
+      trackSleeperOffset = 0f
 
-    // Pre-populate track ahead safely
-    generateInitialTrack()
+      // Pre-populate track ahead safely
+      generateInitialTrack()
+    }
   }
 
   // Input Actions
@@ -181,77 +186,79 @@ class TrilhoEngine(
 
   // 60 FPS Fixed Physics Tick
   fun tick() {
-    if (isGameOver) return
+    synchronized(stateLock) {
+      if (isGameOver) return
 
-    // 1. Calculate progressive speed
-    val speedMultiplier = if (boostTicksRemaining > 0) 1.85f else 1.0f
-    val difficultyStage = distanceMeters / 500
-    currentSpeed = (BASE_SPEED + difficultyStage * SPEED_STEP_PER_500M) * speedMultiplier
+      // 1. Calculate progressive speed
+      val speedMultiplier = if (boostTicksRemaining > 0) 1.85f else 1.0f
+      val difficultyStage = distanceMeters / 500
+      currentSpeed = (BASE_SPEED + difficultyStage * SPEED_STEP_PER_500M) * speedMultiplier
 
-    val moveDelta = currentSpeed * DELTA_TIME
-    distancePx += moveDelta
-    trackSleeperOffset = (trackSleeperOffset + moveDelta) % 90f
+      val moveDelta = currentSpeed * DELTA_TIME
+      distancePx += moveDelta
+      trackSleeperOffset = (trackSleeperOffset + moveDelta) % 90f
 
-    // 2. Update Lane Change Interpolation (Tween)
-    if (laneChangeTicksRemaining > 0) {
-      laneChangeTicksRemaining--
-      val progress = 1f - (laneChangeTicksRemaining.toFloat() / LANE_CHANGE_DURATION_TICKS)
-      // Smooth sinusoidal easeInOut
-      val eased = 0.5f - 0.5f * cos(progress * PI.toFloat())
-      playerX = startLaneX + (targetLane.targetX - startLaneX) * eased
-      if (laneChangeTicksRemaining == 0) {
-        currentLane = targetLane
-        playerX = targetLane.targetX
+      // 2. Update Lane Change Interpolation (Tween)
+      if (laneChangeTicksRemaining > 0) {
+        laneChangeTicksRemaining--
+        val progress = 1f - (laneChangeTicksRemaining.toFloat() / LANE_CHANGE_DURATION_TICKS)
+        // Smooth sinusoidal easeInOut
+        val eased = 0.5f - 0.5f * cos(progress * PI.toFloat())
+        playerX = startLaneX + (targetLane.targetX - startLaneX) * eased
+        if (laneChangeTicksRemaining == 0) {
+          currentLane = targetLane
+          playerX = targetLane.targetX
+        }
       }
-    }
 
-    // 3. Update Jump Curve
-    if (isJumping) {
-      jumpTicks--
-      val progress = 1f - (jumpTicks.toFloat() / JUMP_DURATION_TICKS)
-      // Parabolic jump arc: 4 * h * p * (1 - p)
-      jumpHeightOffset = 130f * 4f * progress * (1f - progress)
-      if (jumpTicks <= 0) {
-        isJumping = false
-        jumpHeightOffset = 0f
-        spawnParticleBurst(playerX, PLAYER_BASE_Y + 10f, 10, 0xFF38E1FF)
+      // 3. Update Jump Curve
+      if (isJumping) {
+        jumpTicks--
+        val progress = 1f - (jumpTicks.toFloat() / JUMP_DURATION_TICKS)
+        // Parabolic jump arc: 4 * h * p * (1 - p)
+        jumpHeightOffset = 130f * 4f * progress * (1f - progress)
+        if (jumpTicks <= 0) {
+          isJumping = false
+          jumpHeightOffset = 0f
+          spawnParticleBurst(playerX, PLAYER_BASE_Y + 10f, 10, 0xFF38E1FF)
+        }
       }
-    }
 
-    // 4. Update Slide
-    if (isSliding) {
-      slideTicks--
-      if (slideTicks <= 0) {
-        isSliding = false
+      // 4. Update Slide
+      if (isSliding) {
+        slideTicks--
+        if (slideTicks <= 0) {
+          isSliding = false
+        }
       }
-    }
 
-    // 5. Update Timers (Crystal Invulnerability, Power-ups)
-    if (crystalInvulnTicks > 0) crystalInvulnTicks--
-    if (graceInvulnTicks > 0) graceInvulnTicks--
-    if (magnetTicksRemaining > 0) magnetTicksRemaining--
-    if (boostTicksRemaining > 0) boostTicksRemaining--
+      // 5. Update Timers (Crystal Invulnerability, Power-ups)
+      if (crystalInvulnTicks > 0) crystalInvulnTicks--
+      if (graceInvulnTicks > 0) graceInvulnTicks--
+      if (magnetTicksRemaining > 0) magnetTicksRemaining--
+      if (boostTicksRemaining > 0) boostTicksRemaining--
 
-    // 6. Move Obstacles & Pickups downwards
-    updateObstacles(moveDelta)
-    updatePickups(moveDelta)
+      // 6. Move Obstacles & Pickups downwards
+      updateObstacles(moveDelta)
+      updatePickups(moveDelta)
 
-    // 7. Check Collisions
-    checkCollisions()
+      // 7. Check Collisions
+      checkCollisions()
 
-    // 8. Procedural Track Generation
-    generateProceduralTrack(moveDelta)
+      // 8. Procedural Track Generation
+      generateProceduralTrack(moveDelta)
 
-    // 9. Update Particles
-    val pIter = particles.iterator()
-    while (pIter.hasNext()) {
-      val p = pIter.next()
-      p.life -= DELTA_TIME
-      if (p.life <= 0f) {
-        pIter.remove()
-      } else {
-        p.x += p.vx * DELTA_TIME
-        p.y += p.vy * DELTA_TIME
+      // 9. Update Particles
+      val pIter = particles.iterator()
+      while (pIter.hasNext()) {
+        val p = pIter.next()
+        p.life -= DELTA_TIME
+        if (p.life <= 0f) {
+          pIter.remove()
+        } else {
+          p.x += p.vx * DELTA_TIME
+          p.y += p.vy * DELTA_TIME
+        }
       }
     }
   }

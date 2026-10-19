@@ -56,18 +56,27 @@ fun TrilhoGameCanvas(
       drawContext.canvas.translate(offsetX, offsetY)
       drawContext.canvas.scale(scale, scale)
 
+      // Take thread-safe snapshots of mutable entity pools
+      val (safeObstacles, safePickups, safeParticles) = synchronized(engine.stateLock) {
+        Triple(
+          engine.activeObstacles.toList(),
+          engine.activePickups.toList(),
+          engine.particles.toList()
+        )
+      }
+
       // 1. Draw 3-Lane Railway Perspective Background
       drawRailwayTrack(engine.trackSleeperOffset, pulseAnim, engine.boostTicksRemaining > 0)
 
       // 2. Draw Active Obstacles
-      for (obs in engine.activeObstacles) {
+      for (obs in safeObstacles) {
         if (obs.active && obs.y in -100f..1350f) {
           drawObstacle(obs, pulseAnim)
         }
       }
 
       // 3. Draw Pickups (Coins, Crystals, Power-ups)
-      for (item in engine.activePickups) {
+      for (item in safePickups) {
         if (item.active && item.y in -50f..1350f) {
           drawPickup(item, pulseAnim)
         }
@@ -79,7 +88,7 @@ fun TrilhoGameCanvas(
       }
 
       // 5. Dynamic Particle System
-      drawParticles(engine.particles)
+      drawParticles(safeParticles)
 
       // 6. Active Invulnerability / Boost Screen Vignette
       if (engine.crystalInvulnTicks > 0 || engine.boostTicksRemaining > 0) {
@@ -532,7 +541,8 @@ private fun DrawScope.drawRunner(
 }
 
 private fun DrawScope.drawParticles(particles: List<RunnerParticle>) {
-  for (p in particles) {
+  for (i in 0 until particles.size) {
+    val p = particles.getOrNull(i) ?: continue
     val alpha = (p.life / p.maxLife).coerceIn(0f, 1f)
     drawCircle(
       color = Color(p.color).copy(alpha = alpha),

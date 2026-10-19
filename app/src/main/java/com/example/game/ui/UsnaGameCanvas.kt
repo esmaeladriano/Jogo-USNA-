@@ -92,8 +92,13 @@ fun UsnaGameCanvas(
       // 7. Celestial Exit Portal Vortex
       drawExitPortal(engine.level.exitPortal, pulseAnim)
 
+      // Take safe snapshots of engine entity pools
+      val (safeEchoes, safeParticles) = synchronized(engine.stateLock) {
+        Pair(engine.activeEchoes.toList(), engine.particles.toList())
+      }
+
       // 8. Active Echoes (Holographic scanline phantoms)
-      for (echo in engine.activeEchoes) {
+      for (echo in safeEchoes) {
         if (!echo.isDestroyed) {
           drawEcho(echo, pulseAnim)
         }
@@ -107,7 +112,7 @@ fun UsnaGameCanvas(
       }
 
       // 10. Dynamic Particles System
-      drawParticles(engine.particles)
+      drawParticles(safeParticles)
 
       // 11. Active Recording Aura & Indicator
       if (engine.isRecording) {
@@ -582,7 +587,8 @@ private fun DrawScope.drawEcho(echo: EchoInstance, pulse: Float) {
 }
 
 private fun DrawScope.drawParticles(particles: List<VisualParticle>) {
-  for (p in particles) {
+  for (i in 0 until particles.size) {
+    val p = particles.getOrNull(i) ?: continue
     val alpha = (p.life / p.maxLife).coerceIn(0f, 1f)
     val pColor = Color(p.color).copy(alpha = alpha)
     drawCircle(

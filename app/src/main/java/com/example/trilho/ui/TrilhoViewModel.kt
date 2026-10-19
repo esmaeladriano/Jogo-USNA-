@@ -23,6 +23,7 @@ enum class TrilhoScreenState {
 data class GameOverState(
   val distanceMeters: Int,
   val coinsEarned: Int,
+  val totalCoins: Int,
   val isNewRecord: Boolean
 )
 
@@ -107,6 +108,7 @@ class TrilhoViewModel(application: Application) : AndroidViewModel(application) 
         _gameOverState.value = GameOverState(
           distanceMeters = event.distanceMeters,
           coinsEarned = event.coinsEarned,
+          totalCoins = updatedProgress.totalCoins,
           isNewRecord = isRecord
         )
       }

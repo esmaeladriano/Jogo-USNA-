@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.delay
 import com.example.trilho.model.*
 
 @Composable
@@ -584,11 +585,23 @@ fun TrilhoSettingsScreen(
 fun TrilhoGameOverDialog(
   distanceMeters: Int,
   coinsEarned: Int,
+  totalCoins: Int,
   isNewRecord: Boolean,
   language: String,
   onPlayAgain: () -> Unit,
   onMainMenu: () -> Unit
 ) {
+  var countdownSeconds by remember { mutableIntStateOf(10) }
+
+  // 10s Auto-restart countdown
+  LaunchedEffect(Unit) {
+    while (countdownSeconds > 0) {
+      delay(1000L)
+      countdownSeconds--
+    }
+    onPlayAgain()
+  }
+
   Dialog(onDismissRequest = {}) {
     Surface(
       shape = RoundedCornerShape(24.dp),
@@ -600,49 +613,80 @@ fun TrilhoGameOverDialog(
       modifier = Modifier.widthIn(max = 420.dp)
     ) {
       Column(
-        modifier = Modifier.padding(24.dp),
+        modifier = Modifier.padding(22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
       ) {
         Text(
-          text = if (isNewRecord) TrilhoStrings.get("new_record", language) else TrilhoStrings.get("game_over", language),
+          text = if (isNewRecord) "🏆 NOVO RECORDE!" else "💥 FIM DE LINHA",
           color = if (isNewRecord) Color(0xFFFFD700) else Color(0xFFFF3D57),
-          fontSize = 24.sp,
+          fontSize = 22.sp,
           fontWeight = FontWeight.Black
         )
 
         Surface(
-          shape = RoundedCornerShape(14.dp),
+          shape = RoundedCornerShape(16.dp),
           color = Color(0x660F1622),
           modifier = Modifier.fillMaxWidth()
         ) {
           Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-              Text(TrilhoStrings.get("distance", language), color = Color(0xFF90A4AE))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+              Text("🏃 Distância", color = Color(0xFF90A4AE), fontSize = 14.sp)
               Text("$distanceMeters m", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-              Text(TrilhoStrings.get("coins", language), color = Color(0xFF90A4AE))
-              Text("+$coinsEarned 🪙", color = Color(0xFFFFD700), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+              Text("🪙 Nesta corrida", color = Color(0xFF90A4AE), fontSize = 14.sp)
+              Text("+$coinsEarned", color = Color(0xFFFFD700), fontWeight = FontWeight.Black, fontSize = 16.sp)
+            }
+            HorizontalDivider(color = Color(0x22FFFFFF), thickness = 1.dp)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+              Text("💰 Total moedas", color = Color(0xFF38E1FF), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+              Text("$totalCoins 🪙", color = Color(0xFFFFD700), fontWeight = FontWeight.Black, fontSize = 18.sp)
             }
           }
+        }
+
+        Text(
+          text = "Recomeçar?",
+          color = Color.White,
+          fontSize = 16.sp,
+          fontWeight = FontWeight.Bold
+        )
+
+        // 10s Countdown progress bar
+        Column(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+          LinearProgressIndicator(
+            progress = { (countdownSeconds / 10f).coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+            color = Color(0xFF00E676),
+            trackColor = Color(0x33FFFFFF)
+          )
+          Text(
+            text = "⏱️ Reinicia automaticamente em ${countdownSeconds}s",
+            color = Color(0xFFB0BEC5),
+            fontSize = 12.sp
+          )
         }
 
         // [Ponto de integração: Ver anúncio para reviver - não implementado conforme instrução do utilizador]
 
         Button(
           onClick = onPlayAgain,
-          modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_game_over_play_again"),
+          modifier = Modifier.fillMaxWidth().height(50.dp).testTag("btn_game_over_play_again"),
           colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E676))
         ) {
-          Text(TrilhoStrings.get("play_again", language), color = Color(0xFF092410), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+          Text("▶ Recomeçar (${countdownSeconds}s)", color = Color(0xFF092410), fontWeight = FontWeight.Black, fontSize = 16.sp)
         }
 
         OutlinedButton(
           onClick = onMainMenu,
-          modifier = Modifier.fillMaxWidth().testTag("btn_game_over_menu")
+          modifier = Modifier.fillMaxWidth().height(44.dp).testTag("btn_game_over_menu")
         ) {
-          Text(TrilhoStrings.get("main_menu", language), color = Color.White)
+          Text("🏠 Menu", color = Color.White, fontSize = 14.sp)
         }
       }
     }

@@ -167,6 +167,7 @@ fun TrilhoAppRoot(viewModel: TrilhoViewModel) {
             TrilhoGameOverDialog(
               distanceMeters = over.distanceMeters,
               coinsEarned = over.coinsEarned,
+              totalCoins = over.totalCoins,
               isNewRecord = over.isNewRecord,
               language = settings.language,
               onPlayAgain = { viewModel.startRun() },

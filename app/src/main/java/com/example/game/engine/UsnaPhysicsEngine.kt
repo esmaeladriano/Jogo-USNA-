@@ -69,32 +69,37 @@ class UsnaPhysicsEngine(
   val buttons = level.buttons.map { it.copy() }.toMutableList()
   val doors = level.doors.map { it.copy() }.toMutableList()
 
+  // Thread synchronization lock
+  val stateLock = Any()
+
   // Metrics
   var levelTicks = 0
   val levelTimeSec: Float get() = levelTicks / TICK_RATE.toFloat()
 
   fun resetLevel() {
-    playerPosition = level.playerSpawn
-    playerVelocity = Vector2()
-    isPlayerGrounded = false
-    playerFacingRight = true
-    coyoteTimer = 0
-    jumpBufferTimer = 0
-    isPlayerDead = false
-    deathTimer = 0
-    isLevelCompleted = false
-    isRecording = false
-    recordingInputs.clear()
-    pendingRecording = null
-    activeEchoes.clear()
-    totalEchoesUsedInLevel = 0
-    levelTicks = 0
+    synchronized(stateLock) {
+      playerPosition = level.playerSpawn
+      playerVelocity = Vector2()
+      isPlayerGrounded = false
+      playerFacingRight = true
+      coyoteTimer = 0
+      jumpBufferTimer = 0
+      isPlayerDead = false
+      deathTimer = 0
+      isLevelCompleted = false
+      isRecording = false
+      recordingInputs.clear()
+      pendingRecording = null
+      activeEchoes.clear()
+      totalEchoesUsedInLevel = 0
+      levelTicks = 0
 
-    // Reset buttons and doors
-    buttons.clear()
-    buttons.addAll(level.buttons.map { it.copy() })
-    doors.clear()
-    doors.addAll(level.doors.map { it.copy() })
+      // Reset buttons and doors
+      buttons.clear()
+      buttons.addAll(level.buttons.map { it.copy() })
+      doors.clear()
+      doors.addAll(level.doors.map { it.copy() })
+    }
   }
 
   fun changeLevel(newLevel: LevelData) {
@@ -203,53 +208,55 @@ class UsnaPhysicsEngine(
 
   // Fixed 60Hz physics tick
   fun tick(input: GameInput) {
-    if (isLevelCompleted) return
+    synchronized(stateLock) {
+      if (isLevelCompleted) return
 
-    // Handle death respawn timer
-    if (isPlayerDead) {
-      deathTimer++
-      if (deathTimer >= DEATH_RESPAWN_TICKS) {
-        resetLevel()
+      // Handle death respawn timer
+      if (isPlayerDead) {
+        deathTimer++
+        if (deathTimer >= DEATH_RESPAWN_TICKS) {
+          resetLevel()
+        }
+        return
       }
-      return
-    }
 
-    levelTicks++
+      levelTicks++
 
-    // 1. Process Recording
-    if (isRecording) {
-      recordingInputs.add(input)
-      if (recordingInputs.size >= MAX_RECORD_TICKS) {
-        stopRecording()
+      // 1. Process Recording
+      if (isRecording) {
+        recordingInputs.add(input)
+        if (recordingInputs.size >= MAX_RECORD_TICKS) {
+          stopRecording()
+        }
       }
-    }
 
-    // 2. Process Echoes physics & playback
-    updateEchoes()
+      // 2. Process Echoes physics & playback
+      updateEchoes()
 
-    // 3. Process Player physics
-    updatePlayer(input)
+      // 3. Process Player physics
+      updatePlayer(input)
 
-    // 4. Update Interactive Entities (Buttons, Doors)
-    updateButtonsAndDoors()
+      // 4. Update Interactive Entities (Buttons, Doors)
+      updateButtonsAndDoors()
 
-    // 5. Hazard Check (Spikes)
-    checkHazards()
+      // 5. Hazard Check (Spikes)
+      checkHazards()
 
-    // 6. Victory Check (Exit Portal)
-    checkVictory()
+      // 6. Victory Check (Exit Portal)
+      checkVictory()
 
-    // 7. Update Particles
-    val pIter = particles.iterator()
-    while (pIter.hasNext()) {
-      val p = pIter.next()
-      p.life -= DELTA_TIME
-      if (p.life <= 0f) {
-        pIter.remove()
-      } else {
-        p.x += p.vx * DELTA_TIME
-        p.y += p.vy * DELTA_TIME
-        p.vy += 220f * DELTA_TIME // slight gravity
+      // 7. Update Particles
+      val pIter = particles.iterator()
+      while (pIter.hasNext()) {
+        val p = pIter.next()
+        p.life -= DELTA_TIME
+        if (p.life <= 0f) {
+          pIter.remove()
+        } else {
+          p.x += p.vx * DELTA_TIME
+          p.y += p.vy * DELTA_TIME
+          p.vy += 220f * DELTA_TIME // slight gravity
+        }
       }
     }
   }
