@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Trilho",
+    "slug": "trilho-runner",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#060A14",
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.usna.trilho" },
+    "android": {
+      "package": "com.usna.trilho",
+      "adaptiveIcon": { "backgroundColor": "#060A14" }
+    }
+  }
+}
